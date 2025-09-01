@@ -1,540 +1,314 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>You're Invited! | The Sims-style Birthday Unlock</title>
-<meta name="description" content="Complete your Sim's needs to unlock the birthday venue!" />
-<meta property="og:title" content="You're Invited! 🎉" />
-<meta property="og:description" content="Do the mini-activities to reveal the party location." />
-<meta name="theme-color" content="#28e06f" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Birthday Invite — Sims‑Style Click Game</title>
+  <style>
+    :root {
+      --wall:#eaf5ff;
+      --floor:#d8bfa0;
+      --shadow:rgba(0,0,0,.15);
+      --accent:#7c3aed; /* purple */
+      --success:#22c55e; /* green */
+      --danger:#ef4444; /* red */
+      --ink:#1f2937;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink)}
+    body{display:flex;align-items:center;justify-content:center;background:#f7fafc}
 
-<style>
-  :root{
-    --bg:#0b1522;            /* deep blue background */
-    --panel:#132233;         /* card bg */
-    --text:#dfe8f3;          /* main text */
-    --muted:#9bb0c6;         /* secondary text */
-    --accent:#28e06f;        /* Sims plumbob green */
-    --accent-2:#20b857;      /* darker green */
-    --bar-bg:#1a2c42;        /* need bar bg */
-    --bar-fill:#28e06f;      /* need bar fill */
-    --warning:#ffcc00;
-    --danger:#ff5c7a;
-    --shadow:0 10px 30px rgba(0,0,0,.35);
-  }
+    .room{
+      width:min(980px,95vw);height:min(620px,90vh);position:relative;border-radius:18px;overflow:hidden;box-shadow:0 20px 40px var(--shadow),0 2px 0 white inset;background:linear-gradient(180deg,var(--wall) 0 65%, var(--floor) 65% 100%);
+    }
+    .room::after{ /* floor seam */
+      content:"";position:absolute;left:0;right:0;top:65%;height:6px;background:linear-gradient(90deg, #0000 0 15%, rgba(0,0,0,.05) 15% 16%, #0000 16% 100%);
+    }
 
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-    background:
-      radial-gradient(1200px 600px at 10% -20%, #1a3a57 0%, transparent 60%),
-      radial-gradient(1000px 600px at 90% -10%, #0f2438 0%, transparent 60%),
-      var(--bg);
-    color:var(--text);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:24px;
-  }
+    .hud{
+      position:absolute;inset:14px 14px auto 14px;display:flex;gap:8px;align-items:center;justify-content:space-between;pointer-events:none
+    }
+    .pill{pointer-events:auto;background:white;border-radius:999px;padding:10px 14px;box-shadow:0 4px 12px var(--shadow);display:flex;align-items:center;gap:10px}
+    .pill small{opacity:.7}
+    .seq{display:flex;gap:8px}
+    .chip{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#f1f5f9;font-size:20px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.06)}
+    .chip.done{background:#dcfce7}
+    .chip.error{background:#fee2e2}
 
-  .card{
-    width:min(980px, 100%);
-    background:linear-gradient(180deg, rgba(255,255,255,.02), transparent 40%),
-               var(--panel);
-    border:1px solid rgba(255,255,255,.06);
-    border-radius:18px;
-    box-shadow:var(--shadow);
-    overflow:hidden;
-  }
+    .grid{position:absolute;inset:20% 6% 8% 6%;display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(3,1fr);gap:2%}
 
-  .hero{
-    position:relative;
-    padding:28px 24px 10px;
-    display:grid;
-    grid-template-columns: 160px 1fr;
-    gap:16px;
-  }
+    /* Furniture */
+    .sofa{grid-column:2/6;grid-row:3/4;background:#7dd3fc;border-radius:20px/24px 24px 14px 14px;position:relative;box-shadow:0 12px 0 rgba(0,0,0,.08) inset}
+    .sofa::after{content:"";position:absolute;left:6%;right:6%;top:-12px;height:26px;background:#bae6fd;border-radius:16px;box-shadow:0 3px 0 rgba(0,0,0,.05)}
 
-  /* Plumbob (pure CSS) */
-  .plumbob-wrap{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .plumbob{
-    width:0;height:0;
-    border-left:28px solid transparent;
-    border-right:28px solid transparent;
-    border-bottom:60px solid var(--accent);
-    filter:drop-shadow(0 6px 10px rgba(40,224,111,.35));
-    position:relative;
-    animation:bob 2.6s ease-in-out infinite;
-  }
-  .plumbob::after{
-    content:"";
-    position:absolute; left:-28px; top:60px;
-    width:0;height:0;
-    border-left:28px solid transparent;
-    border-right:28px solid transparent;
-    border-top:48px solid var(--accent-2);
-  }
-  @keyframes bob{
-    0%,100%{ transform:translateY(-6px) rotate(0.0001deg) }
-    50%{ transform:translateY(6px) rotate(0.0001deg) }
-  }
+    .table{grid-column:3/5;grid-row:2/3;background:#fff;border-radius:14px;box-shadow:0 10px 24px var(--shadow);position:relative}
+    .table::after{content:"";position:absolute;inset:0;border-radius:14px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.06)}
 
-  .title h1{
-    margin:0 0 6px;
-    font-size:clamp(22px, 4vw, 36px);
-    letter-spacing:.3px;
-  }
-  .title p{ margin:0; color:var(--muted) }
+    .side{grid-column:6/7;grid-row:2/3;border-radius:14px;background:#fff;box-shadow:0 8px 18px var(--shadow);position:relative;display:grid;place-items:center}
 
-  .grid{
-    display:grid;
-    grid-template-columns: 320px 1fr;
-    gap:16px;
-    padding:12px 24px 24px;
-  }
-  @media (max-width: 860px){
-    .hero{ grid-template-columns: 1fr; text-align:center }
-    .grid{ grid-template-columns: 1fr }
-    .plumbob-wrap{ order:-1; margin-bottom:6px }
-  }
+    .plant{grid-column:1/2;grid-row:2/3;display:grid;place-items:center}
 
-  /* Sim panel */
-  .sim-panel{
-    background:rgba(255,255,255,.02);
-    border:1px solid rgba(255,255,255,.06);
-    border-radius:14px;
-    padding:16px;
-  }
-  .sim-stage{
-    background:linear-gradient(180deg, #0e2031 0%, #0b1624 100%);
-    border:1px solid rgba(255,255,255,.05);
-    border-radius:12px;
-    height:280px;
-    position:relative;
-    overflow:hidden;
-  }
-  .sim{
-    position:absolute; inset:0;
-    display:flex; align-items:center; justify-content:center; gap:18px;
-  }
-  .avatar{
-    width:120px; height:160px; position:relative;
-    filter:drop-shadow(0 10px 12px rgba(0,0,0,.45));
-  }
-  .head{
-    width:80px; height:80px; background:#ffddb9; border-radius:50%;
-    margin:0 auto; position:relative; top:4px;
-  }
-  .body{
-    width:120px; height:90px; background:#2b6cb0; border-radius:60px 60px 16px 16px;
-    margin:0 auto; position:relative; top:10px;
-  }
-  .plumbob-mini{
-    position:absolute; top:-18px; left:50%; transform:translateX(-50%);
-    width:0;height:0; border-left:10px solid transparent; border-right:10px solid transparent; border-bottom:22px solid var(--accent);
-  }
-  .plumbob-mini::after{
-    content:""; position:absolute; left:-10px; top:22px;
-    width:0;height:0; border-left:10px solid transparent; border-right:10px solid transparent; border-top:16px solid var(--accent-2);
-  }
+    button.obj{border:0;background:transparent;cursor:pointer;position:relative;transition:transform .12s ease;filter:drop-shadow(0 6px 10px var(--shadow))}
+    button.obj:active{transform:scale(.98)}
+    .label{position:absolute;left:50%;top:100%;transform:translate(-50%,8px);padding:6px 10px;border-radius:999px;background:#111827;color:white;font-size:12px;box-shadow:0 6px 14px var(--shadow)}
 
-  /* Interactives */
-  .props{
-    display:flex; gap:12px; flex-wrap:wrap; justify-content:center;
-    position:absolute; bottom:10px; left:0; right:0;
-  }
-  .prop{
-    user-select:none; cursor:grab;
-    background:#17283d; border:1px solid rgba(255,255,255,.06);
-    padding:10px 12px; border-radius:12px; font-size:20px;
-    display:flex; align-items:center; gap:8px;
-    transition:transform .1s ease;
-  }
-  .prop:active{ cursor:grabbing; transform:scale(.98) }
-  .prop[data-type="cake"]::after{ content:" Cake" }
-  .prop[data-type="note"]::after{ content:" Dance" }
-  .prop[data-type="pillow"]::after{ content:" Nap" }
+    /* SVG Sizes */
+    .cake{width:min(120px,18vmin)}
+    .gift{width:min(110px,16vmin)}
+    .balloons{width:min(130px,18vmin)}
+    .plant svg{width:min(110px,16vmin)}
 
-  .drop-zone{
-    position:absolute; inset:0; outline:2px dashed transparent; border-radius:12px;
-    transition:.2s ease;
-  }
-  .drop-zone.ready{ outline-color: rgba(40,224,111,.35) }
+    /* Invite modal */
+    .modal{position:absolute;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:20px}
+    .card{width:min(680px,96vw);background:white;border-radius:20px;box-shadow:0 30px 60px rgba(0,0,0,.25);padding:28px 24px;animation:pop .28s ease forwards}
+    @keyframes pop{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .title{font-size:28px;margin:0 0 8px}
+    .subtitle{margin:0 0 16px;opacity:.75}
+    .details{display:grid;grid-template-columns:28px 1fr;gap:10px 14px;align-items:start;margin:10px 0 14px}
+    .badge{display:inline-flex;gap:8px;align-items:center;background:#f1f5f9;padding:8px 12px;border-radius:999px;margin-right:8px}
+    .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .btn{border:0;border-radius:12px;padding:12px 16px;font-weight:600;cursor:pointer}
+    .btn.primary{background:var(--accent);color:white}
+    .btn.ghost{background:#eef2ff;color:#3730a3}
 
-  /* Needs */
-  .needs{
-    background:rgba(255,255,255,.02);
-    border:1px solid rgba(255,255,255,.06);
-    border-radius:14px;
-    padding:16px;
-    display:grid; gap:12px;
-    height:100%;
-  }
-  .need{
-    display:grid; grid-template-columns: 130px 1fr auto; gap:10px; align-items:center;
-  }
-  .need .label{ color:var(--muted); font-size:14px; text-transform:uppercase; letter-spacing:.8px }
-  .bar{
-    background:var(--bar-bg); height:14px; border-radius:999px; overflow:hidden; position:relative;
-  }
-  .bar .fill{
-    width:0%; height:100%; background:linear-gradient(90deg, var(--bar-fill), #5cff9a);
-    transition:width .3s ease;
-  }
-  .need .pct{ width:42px; text-align:right; font-variant-numeric: tabular-nums }
-  .need.done .label{ color:var(--accent) }
-  .need.done .pct{ color:var(--accent) }
-  .hint{ color:var(--muted); font-size:12px; margin-top:4px }
+    /* Toast */
+    .toast{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:#111827;color:white;padding:10px 14px;border-radius:12px;display:none;box-shadow:0 8px 18px var(--shadow)}
 
-  /* Invite Reveal */
-  .reveal{
-    background:
-      radial-gradient(600px 140px at 50% 0%, rgba(40,224,111,.08), transparent 60%),
-      rgba(255,255,255,.02);
-    border-top:1px solid rgba(255,255,255,.06);
-    padding:18px 24px 26px;
-    text-align:center;
-  }
-  .lock-msg{
-    color:var(--warning);
-    display:flex; gap:8px; align-items:center; justify-content:center;
-    font-size:14px;
-  }
-  .invite{
-    display:none;
-    margin-top:6px;
-  }
-  .invite h2{ margin:12px 0 8px; font-size:28px }
-  .invite .meta{
-    display:grid; gap:6px; justify-content:center; margin:6px 0 12px; color:var(--muted)
-  }
-  .pill{
-    display:inline-block; padding:10px 14px; border-radius:999px;
-    background:linear-gradient(180deg, #2a3e2f, #1d2b22);
-    border:1px solid rgba(40,224,111,.35);
-    color:#c9ffd8;
-  }
-  .btn{
-    appearance:none; border:0; cursor:pointer;
-    padding:12px 18px; border-radius:12px; font-weight:600;
-    background:linear-gradient(180deg, #28e06f, #1dc261);
-    color:#06230f; box-shadow:0 8px 18px rgba(40,224,111,.35);
-  }
-  .btn:active{ transform:translateY(1px) }
+    /* Confetti Canvas */
+    canvas#confetti{position:absolute;inset:0;pointer-events:none}
 
-  /* Toast */
-  .toast{
-    position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
-    background:#0e1a28; color:var(--text);
-    border:1px solid rgba(255,255,255,.08);
-    padding:10px 14px; border-radius:999px; box-shadow:var(--shadow);
-    display:none; font-size:14px;
-  }
-
-  /* Confetti canvas */
-  canvas#confetti{ position:fixed; inset:0; pointer-events:none }
-</style>
+    /* Responsive tweaks */
+    @media (max-width:560px){
+      .grid{inset:22% 4% 8%}
+      .label{display:none}
+    }
+  </style>
 </head>
 <body>
-<canvas id="confetti"></canvas>
+  <div class="room" id="room">
+    <canvas id="confetti"></canvas>
 
-<div class="card" role="main" aria-labelledby="title">
-  <div class="hero">
-    <div class="plumbob-wrap" aria-hidden="true">
-      <div class="plumbob" title="Plumbob"></div>
-    </div>
-    <div class="title">
-      <h1 id="title">Complete your Sim’s needs to unlock the invite 🎂</h1>
-      <p>Drag <span aria-hidden="true">🍰</span> cake onto your Sim, tap the <span aria-hidden="true">🎵</span> music to dance, and press-and-hold the <span aria-hidden="true">🛏️</span> pillow to nap.</p>
-    </div>
-  </div>
-
-  <div class="grid">
-    <!-- Left: Sim + interactions -->
-    <section class="sim-panel" aria-label="Play area">
-      <div class="sim-stage" id="stage">
-        <div class="drop-zone" id="dropZone" aria-hidden="true"></div>
-        <div class="sim">
-          <div class="avatar" aria-label="Your Sim">
-            <div class="plumbob-mini" aria-hidden="true"></div>
-            <div class="head" aria-hidden="true"></div>
-            <div class="body" aria-hidden="true"></div>
-          </div>
-        </div>
-
-        <div class="props" aria-label="Activities">
-          <button class="prop" id="cakeBtn" data-type="cake" aria-label="Tap or drag cake to feed (Hunger)" type="button">🍰</button>
-          <button class="prop" data-type="note" id="danceBtn" aria-label="Tap to dance (Fun)" type="button">🎵</button>
-          <button class="prop" data-type="pillow" id="napBtn" aria-label="Press and hold to nap (Energy)" type="button">🛏️</button>
+    <!-- HUD / Sequence Tracker -->
+    <div class="hud">
+      <div class="pill" aria-live="polite">
+        <strong>Goal:</strong> <small>Click in order →</small>
+        <div class="seq" id="seq">
+          <div class="chip" data-step="0" title="Cake">🎂</div>
+          <div class="chip" data-step="1" title="Gift">🎁</div>
+          <div class="chip" data-step="2" title="Balloons">🎈</div>
         </div>
       </div>
-      <p class="hint">Tip: drag the cake into the play area, tap the music 10× to dance, hold the pillow for 3 seconds to nap.</p>
-    </section>
-
-    <!-- Right: Needs bars -->
-    <aside class="needs" aria-label="Needs">
-      <div class="need" data-need="hunger">
-        <div class="label">Hunger</div>
-        <div class="bar"><div class="fill" id="bar-hunger"></div></div>
-        <div class="pct" id="pct-hunger">0%</div>
+      <div class="pill" style="gap:12px">
+        <button id="reset" class="btn ghost" title="Reset order">Reset</button>
+        <span style="opacity:.6">Sims‑style invite</span>
       </div>
-      <div class="need" data-need="fun">
-        <div class="label">Fun</div>
-        <div class="bar"><div class="fill" id="bar-fun"></div></div>
-        <div class="pct" id="pct-fun">0%</div>
-      </div>
-      <div class="need" data-need="energy">
-        <div class="label">Energy</div>
-        <div class="bar"><div class="fill" id="bar-energy"></div></div>
-        <div class="pct" id="pct-energy">0%</div>
-      </div>
-    </aside>
-  </div>
-
-  <div class="reveal" id="reveal">
-    <div class="lock-msg" id="lockMsg">🔒 Fill all needs to reveal the party location.</div>
-
-    <div class="invite" id="invite">
-      <h2>🎉 You’re Invited, <span id="cfgName">Friend</span>!</h2>
-      <div class="meta">
-        <div><span class="pill" id="cfgDate">Sat, 18 Oct · 6:00 PM</span></div>
-        <div><span class="pill" id="cfgVenue">Green Rooftop Garden, Orchard</span></div>
-      </div>
-      <a class="btn" id="cfgRSVP" href="#" target="_blank" rel="noopener">RSVP Now</a>
-      <p class="hint" style="margin-top:10px">Share this page or print it—plumbob approved ✅</p>
     </div>
+
+    <!-- Scene Grid -->
+    <div class="grid">
+      <div class="plant">
+        <!-- simple plant -->
+        <svg viewBox="0 0 120 160" aria-hidden="true">
+          <ellipse cx="60" cy="120" rx="40" ry="16" fill="#b45309"/>
+          <rect x="30" y="80" width="60" height="40" rx="8" fill="#f59e0b"/>
+          <path d="M60 80 C40 60, 40 40, 60 30 C80 40, 80 60, 60 80" fill="#10b981"/>
+          <path d="M60 80 C30 70, 30 50, 48 38" fill="#34d399"/>
+          <path d="M60 80 C90 70, 90 50, 72 38" fill="#34d399"/>
+        </svg>
+      </div>
+
+      <div class="table" style="display:grid;place-items:center">
+        <!-- CAKE (Step 1) -->
+        <button class="obj" id="cake" aria-label="Cake">
+          <svg class="cake" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <rect x="30" y="120" width="140" height="46" rx="14" fill="#fde68a"/>
+            <rect x="38" y="115" width="124" height="16" rx="8" fill="#f59e0b"/>
+            <rect x="40" y="88" width="120" height="40" rx="12" fill="#fecdd3"/>
+            <path d="M40 108 Q60 96 70 108 T100 108 T130 108 T160 108 V128 H40 Z" fill="#fb7185"/>
+            <g>
+              <rect x="60" y="60" width="10" height="28" rx="5" fill="#fde68a"/>
+              <rect x="95" y="56" width="10" height="32" rx="5" fill="#fde68a"/>
+              <rect x="130" y="62" width="10" height="26" rx="5" fill="#fde68a"/>
+              <path d="M65 56 q5 -12 10 0" stroke="#f59e0b" stroke-width="3" fill="none"/>
+              <path d="M100 52 q5 -12 10 0" stroke="#f59e0b" stroke-width="3" fill="none"/>
+              <path d="M135 58 q5 -12 10 0" stroke="#f59e0b" stroke-width="3" fill="none"/>
+            </g>
+          </svg>
+          <span class="label">Cake</span>
+        </button>
+      </div>
+
+      <div class="sofa"></div>
+
+      <div class="side">
+        <!-- GIFT (Step 2) -->
+        <button class="obj" id="gift" aria-label="Gift">
+          <svg class="gift" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <rect x="40" y="80" width="120" height="80" rx="12" fill="#c7d2fe"/>
+            <rect x="40" y="80" width="120" height="16" fill="#818cf8"/>
+            <rect x="90" y="80" width="20" height="80" fill="#6366f1"/>
+            <path d="M100 80 C70 70, 70 40, 85 40 C100 42, 100 62, 100 62" stroke="#6366f1" stroke-width="10" fill="none"/>
+            <path d="M100 80 C130 70, 130 40, 115 40 C100 42, 100 62, 100 62" stroke="#6366f1" stroke-width="10" fill="none"/>
+          </svg>
+          <span class="label">Gift</span>
+        </button>
+      </div>
+
+      <div style="grid-column:4/6;grid-row:1/2;display:grid;place-items:center">
+        <!-- BALLOONS (Step 3) -->
+        <button class="obj" id="balloons" aria-label="Balloons">
+          <svg class="balloons" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="70" cy="80" rx="34" ry="40" fill="#fca5a5"/>
+            <ellipse cx="110" cy="70" rx="34" ry="40" fill="#a7f3d0"/>
+            <ellipse cx="140" cy="88" rx="34" ry="40" fill="#93c5fd"/>
+            <path d="M70 120 C70 140, 62 156, 56 172" stroke="#9ca3af" stroke-width="2" fill="none"/>
+            <path d="M110 110 C110 138, 100 160, 92 176" stroke="#9ca3af" stroke-width="2" fill="none"/>
+            <path d="M140 128 C140 150, 132 166, 126 178" stroke="#9ca3af" stroke-width="2" fill="none"/>
+          </svg>
+          <span class="label">Balloons</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal invite -->
+    <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="title">
+      <div class="card">
+        <h2 class="title" id="title">David’s Birthday Bash 🎉</h2>
+        <p class="subtitle">You cracked the sequence: <strong>Cake → Gift → Balloons</strong>!</p>
+        <div class="badge">📍 <span><strong>Venue:</strong> Pingnakorn Nimman Hotel, Chiang Mai</span></div>
+        <div class="badge">📅 <span><strong>Date:</strong> Sat, 26 Oct 2025</span></div>
+        <div class="badge">🕖 <span><strong>Time:</strong> 7:00 PM</span></div>
+
+        <div class="details">
+          <div>ℹ️</div>
+          <div>Dress code: Smart‑casual with a splash of purple. Bring your best vibes. Food, games, and cake guaranteed!</div>
+          <div>✅</div>
+          <div>Please RSVP by 12 Oct via WhatsApp.</div>
+        </div>
+
+        <div class="cta">
+          <a id="addCal" class="btn primary" href="#">Add to Calendar</a>
+          <button class="btn ghost" id="close">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">Wrong order — try Cake → Gift → Balloons</div>
   </div>
-</div>
 
-<div class="toast" id="toast" role="status" aria-live="polite">Nice! Keep going…</div>
+  <script>
+    // --- Sequence Logic ---
+    const order = ["cake","gift","balloons"]; // change here to customize order
+    let progress = 0;
 
-<script>
-/* ============================
-   🔧 CONFIG — edit these
-   ============================ */
-const INVITE_CONFIG = {
-  guestName: "David’s Guest",
-  dateTime: "Sat, 18 Oct 2025 · 6:00 PM",
-  venue: "Level 5 Sky Garden, 313@Somerset",
-  rsvpUrl: "https://example.com/rsvp",
-  needsRequired: { hunger: 100, fun: 100, energy: 100 },
-  danceClicksNeeded: 10,
-  napHoldMs: 3000
-};
+    const chips = [...document.querySelectorAll('.chip')];
+    const toast = document.getElementById('toast');
+    const modal = document.getElementById('modal');
+    const resetBtn = document.getElementById('reset');
+    const closeBtn = document.getElementById('close');
 
-/* Apply config text */
-document.getElementById("cfgName").textContent = INVITE_CONFIG.guestName;
-document.getElementById("cfgDate").textContent = INVITE_CONFIG.dateTime;
-document.getElementById("cfgVenue").textContent = INVITE_CONFIG.venue;
-document.getElementById("cfgRSVP").href = INVITE_CONFIG.rsvpUrl;
-
-/* ============================
-   State
-   ============================ */
-const state = {
-  hunger: 0,
-  fun: 0,
-  energy: 0,
-  danceClicks: 0,
-  napping: false,
-  napStart: 0
-};
-
-const bars = {
-  hunger: document.getElementById("bar-hunger"),
-  fun: document.getElementById("bar-fun"),
-  energy: document.getElementById("bar-energy")
-};
-const pcts = {
-  hunger: document.getElementById("pct-hunger"),
-  fun: document.getElementById("pct-fun"),
-  energy: document.getElementById("pct-energy")
-};
-
-function clamp(v){ return Math.max(0, Math.min(100, Math.round(v))) }
-function updateNeed(name, value){
-  state[name] = clamp(value);
-  bars[name].style.width = state[name] + "%";
-  pcts[name].textContent = state[name] + "%";
-  const needEl = document.querySelector(`.need[data-need="${name}"]`);
-  needEl.classList.toggle("done", state[name] >= INVITE_CONFIG.needsRequired[name]);
-  checkUnlock();
-}
-
-function toast(msg){
-  const t = document.getElementById("toast");
-  t.textContent = msg; t.style.display = "block";
-  clearTimeout(toast._id);
-  toast._id = setTimeout(()=> t.style.display = "none", 1400);
-}
-
-/* ============================
-   Activity 1: Feed cake (tap OR drag→drop)
-   ============================ */
-const stage = document.getElementById("stage");
-const dropZone = document.getElementById("dropZone");
-const cakeBtn = document.getElementById("cakeBtn");
-
-// Tap/click to feed (works on mobile & desktop)
-cakeBtn.addEventListener("click", ()=>{
-  updateNeed("hunger", state.hunger + 35);
-  toast("Mmm… cake! (+35 Hunger)");
-});
-
-// Optional drag-and-drop (desktop browsers)
-if ("draggable" in document.createElement("div")) {
-  cakeBtn.setAttribute("draggable","true");
-  cakeBtn.addEventListener("dragstart", e=>{
-    cakeBtn.setAttribute("aria-grabbed", "true");
-    dropZone.classList.add("ready");
-    // Some browsers need a payload to allow drop
-    e.dataTransfer.setData("text/plain", "cake");
-  });
-  cakeBtn.addEventListener("dragend", ()=>{
-    cakeBtn.setAttribute("aria-grabbed", "false");
-    dropZone.classList.remove("ready");
-  });
-
-  dropZone.addEventListener("dragover", e=> e.preventDefault());
-  dropZone.addEventListener("drop", e=>{
-    e.preventDefault();
-    const type = e.dataTransfer.getData("text/plain");
-    if(type === "cake"){
-      updateNeed("hunger", state.hunger + 35);
-      toast("Mmm… cake! (+35 Hunger)");
+    function markChips(){
+      chips.forEach((c,i)=>{
+        c.classList.toggle('done', i < progress);
+        c.classList.remove('error');
+      })
     }
-  });
-}
-
-/* ============================
-   Activity 2: Dance (tap button N times)
-   ============================ */
-const danceBtn = document.getElementById("danceBtn");
-danceBtn.addEventListener("click", ()=>{
-  state.danceClicks++;
-  const inc = 100 / INVITE_CONFIG.danceClicksNeeded;
-  updateNeed("fun", state.fun + inc);
-  danceBtn.animate([{ transform:"scale(1)" },{ transform:"scale(1.08)" },{ transform:"scale(1)" }], { duration:200 });
-  toast("🎵 Bust a move! (+Fun)");
-});
-
-/* ============================
-   Activity 3: Nap (press & hold for X ms)
-   ============================ */
-const napBtn = document.getElementById("napBtn");
-let holdTimer = null, tickTimer = null;
-
-napBtn.addEventListener("pointerdown", ()=>{
-  if(state.napping) return;
-  state.napping = true;
-  state.napStart = performance.now();
-  napBtn.classList.add("holding");
-  // Visual pulse
-  tickTimer = setInterval(()=>{
-    const elapsed = performance.now() - state.napStart;
-    const pct = Math.min(1, elapsed / INVITE_CONFIG.napHoldMs);
-    // show small incremental energy while holding
-    updateNeed("energy", Math.max(state.energy, pct * 100));
-  }, 100);
-});
-
-["pointerup","pointerleave","pointercancel"].forEach(ev=>{
-  napBtn.addEventListener(ev, ()=>{
-    if(!state.napping) return;
-    state.napping = false;
-    napBtn.classList.remove("holding");
-    clearInterval(tickTimer);
-    const held = performance.now() - state.napStart;
-    if(held >= INVITE_CONFIG.napHoldMs){
-      updateNeed("energy", 100);
-      toast("💤 Power nap complete! (+Energy)");
-    } else {
-      toast("Hold a bit longer to finish your nap!");
+    function wrong(){
+      chips.forEach(c=>c.classList.add('error'));
+      toast.style.display='block';
+      clearTimeout(wrong.t);
+      wrong.t=setTimeout(()=>toast.style.display='none',1400);
+      shake(document.getElementById('room'));
+      progress=0;markChips();
     }
-  }, { passive:true });
-});
-
-/* ============================
-   Unlock + Reveal
-   ============================ */
-function allGreen(){
-  return ["hunger","fun","energy"].every(k => state[k] >= INVITE_CONFIG.needsRequired[k]);
-}
-
-function checkUnlock(){
-  if(allGreen()){
-    document.getElementById("lockMsg").style.display = "none";
-    const invite = document.getElementById("invite");
-    if(invite.style.display !== "block"){
-      invite.style.display = "block";
-      confettiBurst();
+    function shake(el){
+      el.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:220});
     }
-  }
-}
 
-/* ============================
-   Minimal Confetti
-   ============================ */
-const c = document.getElementById("confetti");
-const ctx = c.getContext("2d");
-let confettiPieces = [];
-function resizeCanvas(){ c.width = innerWidth; c.height = innerHeight }
-addEventListener("resize", resizeCanvas, { passive:true }); resizeCanvas();
+    function tryStep(id){
+      if(id===order[progress]){
+        progress++;markChips();
+        pulse(document.getElementById(id));
+        if(progress===order.length){ celebrate(); }
+      }else wrong();
+    }
+    function pulse(btn){
+      btn.animate([{transform:'scale(1)'},{transform:'scale(1.06)'},{transform:'scale(1)'}],{duration:220});
+    }
 
-function confettiBurst(){
-  confettiPieces = [];
-  const colors = ["#28e06f","#5cff9a","#ffffff","#9be6c3"];
-  for(let i=0;i<160;i++){
-    confettiPieces.push({
-      x: Math.random()*c.width,
-      y: -10,
-      w: 6 + Math.random()*6,
-      h: 10 + Math.random()*16,
-      color: colors[Math.floor(Math.random()*colors.length)],
-      vx: (Math.random()-0.5)*2,
-      vy: 2 + Math.random()*3,
-      rot: Math.random()*Math.PI,
-      vr: (Math.random()-0.5)*0.1
+    ["cake","gift","balloons"].forEach(id=>{
+      document.getElementById(id).addEventListener('click',()=>tryStep(id));
     });
-  }
-  animateConfetti();
-  setTimeout(()=> confettiPieces = [], 3000);
-}
-function animateConfetti(){
-  if(confettiPieces.length===0) return;
-  ctx.clearRect(0,0,c.width,c.height);
-  confettiPieces.forEach(p=>{
-    p.x += p.vx; p.y += p.vy; p.rot += p.vr;
-    ctx.save();
-    ctx.translate(p.x,p.y);
-    ctx.rotate(p.rot);
-    ctx.fillStyle = p.color;
-    ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
-    ctx.restore();
-  });
-  requestAnimationFrame(animateConfetti);
-}
 
-/* ============================
-   Keyboard accessibility
-   ============================ */
-cake.addEventListener("keydown",(e)=>{
-  if(e.key==="Enter"||e.key===" "){ updateNeed("hunger", state.hunger + 35); toast("Mmm… cake! (+35 Hunger)"); }
-});
+    resetBtn.addEventListener('click',()=>{progress=0;markChips();});
+    closeBtn.addEventListener('click',()=>{modal.style.display='none'});
 
-/* Optional: small idle fun drain to feel alive */
-setInterval(()=>{
-  if(!allGreen()){
-    updateNeed("fun", state.fun - 1);
-  }
-}, 5000);
-</script>
+    // --- Confetti + Success ---
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+    const DPR = Math.max(1, window.devicePixelRatio || 1);
+    function resize(){
+      canvas.width = canvas.clientWidth * DPR;
+      canvas.height = canvas.clientHeight * DPR;
+    }
+    window.addEventListener('resize', resize); resize();
+
+    let confetti = [];
+    function celebrate(){
+      for(let i=0;i<140;i++) confetti.push(makePiece());
+      modal.style.display='flex';
+      addCalendarLink();
+      tick();
+    }
+    function makePiece(){
+      return {x:Math.random()*canvas.width,y:-10*Math.random()*canvas.height,vx:(Math.random()-.5)*2,vy:2+Math.random()*2,s:4+Math.random()*6,r:Math.random()*Math.PI,dr:(Math.random()-.5)*.2,c:["#f43f5e","#10b981","#3b82f6","#f59e0b","#8b5cf6"][Math.floor(Math.random()*5)]};
+    }
+    function tick(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      confetti.forEach(p=>{
+        p.x+=p.vx; p.y+=p.vy; p.r+=p.dr;
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle=p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s); ctx.restore();
+      });
+      confetti = confetti.filter(p=>p.y<canvas.height+20);
+      if(confetti.length) requestAnimationFrame(tick);
+    }
+
+    // --- Add to Calendar (ICS) ---
+    function addCalendarLink(){
+      const a = document.getElementById('addCal');
+      const title = encodeURIComponent("David’s Birthday Bash 🎉");
+      // Adjust date/time here (local assumed +08:00 → convert to UTC for ICS if needed)
+      const start = new Date('2025-10-26T19:00:00+08:00');
+      const end = new Date('2025-10-26T22:00:00+08:00');
+      function toICS(dt){
+        // YYYYMMDDTHHMMSSZ
+        return dt.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z');
+      }
+      const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//SimsInvite//EN\nBEGIN:VEVENT\nUID:${Date.now()}@simsinvite\nDTSTAMP:${toICS(new Date())}\nDTSTART:${toICS(start)}\nDTEND:${toICS(end)}\nSUMMARY:${title}\nLOCATION:${encodeURIComponent('Pingnakorn Nimman Hotel, Chiang Mai')}\nDESCRIPTION:${encodeURIComponent('Dress code: Smart‑casual with purple accent. RSVP by 12 Oct.')}\nEND:VEVENT\nEND:VCALENDAR`;
+      const blob = new Blob([ics], {type:'text/calendar'});
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Birthday-Invite.ics';
+    }
+
+    // --- Optional: URL params to customize quickly ---
+    // Example: ?name=Alex&date=2025-12-01&time=18:30&venue=Rooftop
+    const params = new URLSearchParams(location.search);
+    if(params.size){
+      const name = params.get('name') || 'Friend';
+      const date = params.get('date');
+      const time = params.get('time');
+      const venue = params.get('venue');
+      if(name) document.querySelector('#title').textContent = `${name}’s Birthday Bash 🎉`;
+      if(venue){
+        document.querySelectorAll('.badge')[0].innerHTML = `📍 <span><strong>Venue:</strong> ${venue}</span>`;
+      }
+      if(date){
+        document.querySelectorAll('.badge')[1].innerHTML = `📅 <span><strong>Date:</strong> ${new Date(date).toDateString()}</span>`;
+      }
+      if(time){
+        document.querySelectorAll('.badge')[2].innerHTML = `🕖 <span><strong>Time:</strong> ${time}</span>`;
+      }
+    }
+  </script>
 </body>
 </html>
