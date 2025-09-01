@@ -270,9 +270,7 @@
         </div>
 
         <div class="props" aria-label="Activities">
-          <div class="prop" draggable="true" data-type="cake" aria-grabbed="false" role="button" aria-label="Drag cake to feed (Hunger)">
-            🍰
-          </div>
+          <button class="prop" id="cakeBtn" data-type="cake" aria-label="Tap or drag cake to feed (Hunger)" type="button">🍰</button>
           <button class="prop" data-type="note" id="danceBtn" aria-label="Tap to dance (Fun)" type="button">🎵</button>
           <button class="prop" data-type="pillow" id="napBtn" aria-label="Press and hold to nap (Energy)" type="button">🛏️</button>
         </div>
@@ -378,31 +376,42 @@ function toast(msg){
 }
 
 /* ============================
-   Activity 1: Feed cake (drag → drop)
+   Activity 1: Feed cake (tap OR drag→drop)
    ============================ */
 const stage = document.getElementById("stage");
 const dropZone = document.getElementById("dropZone");
-const cake = document.querySelector('.prop[data-type="cake"]');
+const cakeBtn = document.getElementById("cakeBtn");
 
-cake.addEventListener("dragstart", e=>{
-  cake.setAttribute("aria-grabbed", "true");
-  dropZone.classList.add("ready");
-  e.dataTransfer.setData("text/plain", "cake");
-});
-cake.addEventListener("dragend", ()=>{
-  cake.setAttribute("aria-grabbed", "false");
-  dropZone.classList.remove("ready");
+// Tap/click to feed (works on mobile & desktop)
+cakeBtn.addEventListener("click", ()=>{
+  updateNeed("hunger", state.hunger + 35);
+  toast("Mmm… cake! (+35 Hunger)");
 });
 
-dropZone.addEventListener("dragover", e=> e.preventDefault());
-dropZone.addEventListener("drop", e=>{
-  e.preventDefault();
-  const type = e.dataTransfer.getData("text/plain");
-  if(type === "cake"){
-    updateNeed("hunger", state.hunger + 35);
-    toast("Mmm… cake! (+35 Hunger)");
-  }
-});
+// Optional drag-and-drop (desktop browsers)
+if ("draggable" in document.createElement("div")) {
+  cakeBtn.setAttribute("draggable","true");
+  cakeBtn.addEventListener("dragstart", e=>{
+    cakeBtn.setAttribute("aria-grabbed", "true");
+    dropZone.classList.add("ready");
+    // Some browsers need a payload to allow drop
+    e.dataTransfer.setData("text/plain", "cake");
+  });
+  cakeBtn.addEventListener("dragend", ()=>{
+    cakeBtn.setAttribute("aria-grabbed", "false");
+    dropZone.classList.remove("ready");
+  });
+
+  dropZone.addEventListener("dragover", e=> e.preventDefault());
+  dropZone.addEventListener("drop", e=>{
+    e.preventDefault();
+    const type = e.dataTransfer.getData("text/plain");
+    if(type === "cake"){
+      updateNeed("hunger", state.hunger + 35);
+      toast("Mmm… cake! (+35 Hunger)");
+    }
+  });
+}
 
 /* ============================
    Activity 2: Dance (tap button N times)
