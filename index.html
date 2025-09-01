@@ -7,7 +7,7 @@
   <style>
     :root{
       --bg1:#1a1b2e; --bg2:#2a2b45; --accent:#ff8fb1; --cake:#ffdac7; --cake2:#ffc7a8; --icing:#fff3fb; --shadow:rgba(0,0,0,.25);
-      --candle:#66ccff; --wick:#2b2b2b; --flame1:#ffec85; --flame2:#ff9f1a; --flame3:#ffd36e; --smoke:#bfc7d6;
+      --candle:#66ccff; --wick:#2b2b2b; --flame1:#ffec85; --flame2:#ff9f1a; --smoke:#bfc7d6;
     }
     html, body { height:100%; }
     body{
@@ -35,7 +35,7 @@
     .meter > i{ position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg, #9ad1ff, #ffcc66); }
     .meter-label{ font-size:12px; opacity:.7; margin-left:6px; }
 
-    /* CAKE */
+    /* STAGE / CAKE */
     .stage{ position:relative; height:min(520px, 78vh); display:grid; place-items:end center; }
     .table{ position:absolute; left:0; right:0; bottom:0; height:26%; background: radial-gradient(800px 200px at 50% -40px, #2f2e4a 0, #211f37 60%);
             box-shadow: inset 0 25px 30px rgba(255,255,255,.05); }
@@ -78,26 +78,28 @@
            animation: rise 1.2s ease-out forwards; filter: blur(0.4px); }
     @keyframes rise { 0%{ transform: translate(0,0) scale(1); opacity:.9; } 70%{ opacity:.5; } 100%{ transform: translate(var(--dx, 0px), -60px) scale(1.8); opacity:0; } }
 
-    /* invite card revealed */
+    /* invite card — solid background */
     .invite{ position:absolute; inset:auto 0 10%; margin:auto; width:min(680px, 92%); background:#ffffff; color:#1a1b2e;
-    border-radius:18px; padding:22px 22px 18px; transform: translateY(35px) scale(.98); opacity:0; pointer-events:none;
-    transition: all .9s cubic-bezier(.2,.8,.2,1); box-shadow: 0 20px 40px rgba(0,0,0,.35); }
+             border-radius:18px; padding:22px 22px 18px; transform: translateY(35px) scale(.98); opacity:0; pointer-events:none;
+             transition: all .9s cubic-bezier(.2,.8,.2,1); box-shadow: 0 20px 40px rgba(0,0,0,.35); }
     .invite.show{ transform: translateY(0) scale(1); opacity:1; pointer-events:auto; }
     .invite h2{ margin:0 0 6px; font-size:clamp(22px, 4.2vw, 32px); }
-    .invite p{ margin:2px 0; }
     .invite .grid{ display:grid; grid-template-columns: 1fr; gap:8px; margin-top:10px; }
     .invite .row{ display:flex; gap:10px; align-items:flex-start; }
     .pill{ display:inline-block; padding:6px 10px; border-radius:999px; background:rgba(0,0,0,.06); border:1px solid rgba(0,0,0,.15); font-size:13px; }
-    
     .footer{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; flex-wrap:wrap; }
     .rsvp{ text-decoration:none; display:inline-block; padding:10px 14px; border-radius:12px; background:linear-gradient(180deg,#ffed84,#ffc86b); color:#1a1b2e; font-weight:900; }
-    
-    .progress{ font-size:14px; opacity:.85; }
+
+    /* confetti overlay */
+    .confetti{ position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:999; }
+    .confetti-piece{ position:absolute; width:10px; height:14px; opacity:.9; will-change:transform;
+                     animation: fall linear forwards; border-radius:2px; }
+    @keyframes fall{ to{ transform:translateY(100vh) rotate(540deg); opacity:0; } }
+
     .toast{ position:fixed; left:50%; top:12px; transform:translateX(-50%); background:rgba(0,0,0,.55); color:#fff; padding:8px 12px; border-radius:10px; font-size:13px; display:none; }
     .toast.show{ display:block; animation: fade 2.2s ease 0s 1 both; }
     @keyframes fade{ 0%{ opacity:0; transform: translate(-50%, -6px); } 15%{ opacity:1; transform: translate(-50%, 0); } 85%{ opacity:1; } 100%{ opacity:0; transform: translate(-50%, -6px); } }
 
-    /* Responsive tweaks */
     @media (max-width:520px){
       .candles{ top:-6px; height:76px; }
       .candle{ width:10px; height:40px; }
@@ -137,7 +139,7 @@
           <div class="row"><span class="pill">Who</span> <div><strong>Roxanne’s Birthday</strong></div></div>
           <div class="row"><span class="pill">When</span> <div><strong>Friday, 5th Sept 2025</strong> — 7:00 PM</div></div>
           <div class="row"><span class="pill">Where</span> <div><strong>Les Bouchons Puteri Harbour</strong></div></div>
-          <div class="row"><span class="pill">Dress Code</span> <div> Party vibes ✨</div></div>
+          <div class="row"><span class="pill">Dress Code</span> <div>Party vibes ✨</div></div>
           <div class="row"><span class="pill">Note</span> <div>Bring your best wish — and your appetite! 🍰</div></div>
         </div>
         <div class="footer">
@@ -147,6 +149,9 @@
       </div>
     </div>
   </div>
+
+  <!-- confetti layer (empty until trigger) -->
+  <div class="confetti" id="confetti"></div>
 
   <div class="toast" id="toast"></div>
 
@@ -164,6 +169,7 @@
       blowingSince: 0,
       micEnabled: false,
       raf: null,
+      unlocked: false,
       audio: { ctx:null, analyser:null, data:null, stream:null },
     };
 
@@ -179,6 +185,7 @@
       relightBtn: document.getElementById('relightBtn'),
       toast: document.getElementById('toast'),
       stage: document.getElementById('stage'),
+      confetti: document.getElementById('confetti'),
     };
 
     // Build candles evenly across the cake top
@@ -186,18 +193,17 @@
       els.candles.innerHTML = '';
       state.candles = [];
       state.outCount = 0;
+      state.unlocked = false;
       updateProgress();
 
       for(let i=0;i<TOTAL_CANDLES;i++){
         const c = document.createElement('div');
         c.className = 'candle';
         c.dataset.index = i;
-        // position as percentage with small jitter for natural look
         const pct = (i+1)/(TOTAL_CANDLES+1); // 0..1 avoiding edges
         const jitter = (Math.random()-.5) * (100/TOTAL_CANDLES) * .32; // small wobble
         c.style.left = `calc(${(pct*100).toFixed(2)}% + ${jitter.toFixed(2)}px)`;
 
-        // inner parts
         const wax = document.createElement('div'); wax.className = 'wax';
         const wick = document.createElement('div'); wick.className = 'wick';
         const flame = document.createElement('div'); flame.className = 'flame';
@@ -206,7 +212,6 @@
         c.appendChild(wax); c.appendChild(wick); c.appendChild(flame); c.appendChild(smoke);
         els.candles.appendChild(c);
 
-        // record center for hit-testing later (will update on resize)
         state.candles.push({ el:c, out:false, x:0, y:0 });
       }
 
@@ -214,10 +219,8 @@
     }
 
     function updateCandleCenters(){
-      const rect = els.candles.getBoundingClientRect();
       state.candles.forEach(({el}, idx) => {
         const r = el.getBoundingClientRect();
-        // approximate flame center
         const cx = r.left + r.width/2; const cy = r.top - 16; // flame above
         state.candles[idx].x = cx; state.candles[idx].y = cy;
       });
@@ -230,9 +233,7 @@
       setTimeout(()=> els.toast.classList.remove('show'), 2200);
     }
 
-    function updateProgress(){
-      els.progress.textContent = `${state.outCount} / ${TOTAL_CANDLES} out`;
-    }
+    function updateProgress(){ els.progress.textContent = `${state.outCount} / ${TOTAL_CANDLES} out`; }
 
     function makePuffs(el, n=3){
       const smoke = el.querySelector('.smoke');
@@ -259,12 +260,17 @@
       state.outCount = 0; updateProgress();
       els.cake.classList.remove('open');
       els.invite.classList.remove('show'); els.invite.setAttribute('aria-hidden','true');
+      els.confetti.innerHTML = '';
+      state.unlocked = false;
     }
 
     function unlockInvite(){
+      if(state.unlocked) return; // guard against double-calls
+      state.unlocked = true;
       els.cake.classList.add('open');
       els.invite.classList.add('show'); els.invite.setAttribute('aria-hidden','false');
       showToast('✨ Make a wish! Invite unlocked.');
+      launchConfettiBurst();
     }
 
     // Pointer interactions — click / swipe to put out
@@ -276,7 +282,7 @@
     els.stage.addEventListener('pointerdown', onPoint);
 
     function onPoint(e){
-      if(e.pointerType==='mouse' && !pointerDown) return; // require drag for mouse, but tap works on touch/pen
+      if(e.pointerType==='mouse' && !pointerDown) return; // drag for mouse; tap works on touch/pen
       const px = e.clientX, py = e.clientY;
       for(let i=0;i<state.candles.length;i++){
         const c = state.candles[i]; if(c.out) continue;
@@ -324,7 +330,6 @@
       if(rms > MIC_THRESHOLD){
         if(state.blowingSince===0) state.blowingSince = now;
         if(now - state.blowingSince > MIC_SUSTAIN_MS){
-          // extinguish intensity based on how hard you blow
           const strength = Math.min(1, (rms - MIC_THRESHOLD) / (MIC_HARD - MIC_THRESHOLD + 0.0001));
           const toOut = 1 + Math.floor(strength * 3); // 1..4 per gust
           blowOutRandom(toOut);
@@ -340,7 +345,6 @@
     function blowOutRandom(n){
       const aliveIdx = state.candles.map((c,i)=> c.out? -1 : i).filter(i=> i!==-1);
       if(aliveIdx.length===0) return;
-      // pick n distinct indices
       for(let k=0;k<n;k++){
         if(aliveIdx.length===0) break;
         const pick = Math.floor(Math.random()*aliveIdx.length);
@@ -349,9 +353,31 @@
       }
     }
 
+    // One-time confetti burst
+    function launchConfettiBurst(){
+      els.confetti.innerHTML = '';
+      const colors = ['#ff595e','#ffca3a','#8ac926','#1982c4','#6a4c93','#ffd166'];
+      const pieces = 180;
+      for(let i=0;i<pieces;i++){
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random()*100 + 'vw';
+        piece.style.top = (-10 - Math.random()*30) + 'px';
+        piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+        const w = 6 + Math.random()*10, h = 8 + Math.random()*12;
+        piece.style.width = w+'px'; piece.style.height = h+'px';
+        const dur = 2.4 + Math.random()*2.6; piece.style.animationDuration = dur+'s';
+        piece.style.animationDelay = (Math.random()*0.6)+'s';
+        piece.style.transform = `translateY(0) rotate(${Math.random()*360}deg)`;
+        els.confetti.appendChild(piece);
+        setTimeout(()=> piece.remove(), (dur+1.2)*1000);
+      }
+      // auto-clear container after a while
+      setTimeout(()=>{ els.confetti.innerHTML=''; }, 7000);
+    }
+
     // Controls
     els.micBtn.addEventListener('click', async ()=>{
-      // iOS/Safari requires user gesture to resume audio context
       await enableMic();
       if(state.audio.ctx && state.audio.ctx.state==='suspended'){
         try{ await state.audio.ctx.resume(); }catch(e){}
@@ -367,11 +393,6 @@
 
     // init
     buildCandles();
-
-    // Accessibility note
-    document.addEventListener('DOMContentLoaded', ()=>{
-      els.micBtn.setAttribute('aria-pressed','false');
-    });
   </script>
 </body>
 </html>
