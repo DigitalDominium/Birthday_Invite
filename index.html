@@ -79,19 +79,19 @@
     @keyframes rise { 0%{ transform: translate(0,0) scale(1); opacity:.9; } 70%{ opacity:.5; } 100%{ transform: translate(var(--dx, 0px), -60px) scale(1.8); opacity:0; } }
 
     /* invite card revealed */
-    .invite{ position:absolute; inset:auto 0 10%; margin:auto; width:min(680px, 92%); background: rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25);
-             backdrop-filter: blur(8px); border-radius:18px; padding:22px 22px 18px; transform: translateY(35px) scale(.98); opacity:0; pointer-events:none;
-             transition: all .9s cubic-bezier(.2,.8,.2,1); box-shadow: 0 20px 40px rgba(0,0,0,.35); }
+    .invite{ position:absolute; inset:auto 0 10%; margin:auto; width:min(680px, 92%); background:#ffffff; color:#1a1b2e;
+    border-radius:18px; padding:22px 22px 18px; transform: translateY(35px) scale(.98); opacity:0; pointer-events:none;
+    transition: all .9s cubic-bezier(.2,.8,.2,1); box-shadow: 0 20px 40px rgba(0,0,0,.35); }
     .invite.show{ transform: translateY(0) scale(1); opacity:1; pointer-events:auto; }
     .invite h2{ margin:0 0 6px; font-size:clamp(22px, 4.2vw, 32px); }
     .invite p{ margin:2px 0; }
     .invite .grid{ display:grid; grid-template-columns: 1fr; gap:8px; margin-top:10px; }
     .invite .row{ display:flex; gap:10px; align-items:flex-start; }
-    .pill{ display:inline-block; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.25); font-size:13px; }
-
+    .pill{ display:inline-block; padding:6px 10px; border-radius:999px; background:rgba(0,0,0,.06); border:1px solid rgba(0,0,0,.15); font-size:13px; }
+    
     .footer{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; flex-wrap:wrap; }
     .rsvp{ text-decoration:none; display:inline-block; padding:10px 14px; border-radius:12px; background:linear-gradient(180deg,#ffed84,#ffc86b); color:#1a1b2e; font-weight:900; }
-
+    
     .progress{ font-size:14px; opacity:.85; }
     .toast{ position:fixed; left:50%; top:12px; transform:translateX(-50%); background:rgba(0,0,0,.55); color:#fff; padding:8px 12px; border-radius:10px; font-size:13px; display:none; }
     .toast.show{ display:block; animation: fade 2.2s ease 0s 1 both; }
